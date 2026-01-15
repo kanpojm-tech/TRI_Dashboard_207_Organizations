@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRI Dashboard - Transformation Readiness Index</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0c0f1a;
+            --bg2: #141825;
+            --bg3: #1c2133;
+            --card: #1a1f2e;
+            --border: rgba(255,255,255,0.06);
+            --blue: #3b82f6;
+            --cyan: #06b6d4;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --green: #10b981;
+            --emerald: #34d399;
+            --orange: #f59e0b;
+            --amber: #fbbf24;
+            --red: #ef4444;
+            --text: #f1f5f9;
+            --text2: #94a3b8;
+            --text3: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Sans Thai', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -2;
+        }
+        .bg-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.12) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(20,24,37,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-inner {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .logo-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 32px rgba(59,130,246,0.3);
+        }
+        .logo-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-text span {
+            font-size: 0.8rem;
+            color: var(--text2);
+        }
+        .header-badge {
+            background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+            border: 1px solid rgba(16,185,129,0.3);
+            padding: 0.6rem 1.25rem;
+            border-radius: 10px;
+            text-align: right;
+        }
+        .header-badge .sample {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--emerald);
+        }
+        .header-badge .date {
+            font-size: 0.75rem;
+            color: var(--text3);
+        }
+        
+        /* Main */
+        .main {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Section */
+        .section {
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--blue), var(--purple));
+            border-radius: 2px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: rgba(59,130,246,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .grid-4 { grid-template-columns: 1fr; } }
+        
+        /* Legend Box */
+        .legend-box {
+            background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.04));
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .legend-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--purple);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 800px) { .legend-grid { grid-template-columns: 1fr; } }
+        .legend-section h4 {
+            font-size: 0.85rem;
+            color: var(--text2);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.4rem 0;
+            font-size: 0.85rem;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .legend-range {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            min-width: 90px;
+            color: var(--text);
+        }
+        
+        /* Score Card */
+        .score-card {
+            background: linear-gradient(135deg, var(--card), rgba(59,130,246,0.08));
+            text-align: center;
+            padding: 2rem;
+        }
+        .score-label {
+            font-size: 0.85rem;
+            color: var(--text2);
+            margin-bottom: 0.5rem;
+        }
+        .score-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--blue), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .score-max {
+            font-size: 1.5rem;
+            color: var(--text3);
+        }
+        .score-pct {
+            font-size: 1.1rem;
+            color: var(--cyan);
+            margin-top: 0.5rem;
+        }
+        .score-level {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .level-yellow { background: rgba(245,158,11,0.2); color: var(--amber); }
+        .level-green { background: rgba(16,185,129,0.2); color: var(--emerald); }
+        .level-orange { background: rgba(249,115,22,0.2); color: #fb923c; }
+        .level-red { background: rgba(239,68,68,0.2); color: #f87171; }
+        
+        /* Perspective Cards */
+        .persp-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .persp-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+        .persp-card.blue::before { background: linear-gradient(180deg, var(--blue), var(--cyan)); }
+        .persp-card.purple::before { background: linear-gradient(180deg, var(--purple), var(--pink)); }
+        .persp-card.green::before { background: linear-gradient(180deg, var(--green), var(--emerald)); }
+        .persp-card.pink::before { background: linear-gradient(180deg, var(--pink), var(--purple)); }
+        
+        .persp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .persp-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .persp-icon {
+            font-size: 1.75rem;
+        }
+        .persp-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .persp-score {
+            text-align: right;
+        }
+        .persp-score-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .persp-score-label {
+            font-size: 0.75rem;
+            color: var(--text3);
+        }
+        
+        /* Sub-dimension bars */
+        .subdim-list {
+            margin-top: 1rem;
+        }
+        .subdim-item {
+            margin-bottom: 0.75rem;
+        }
+        .subdim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.35rem;
+        }
+        .subdim-name {
+            font-size: 0.85rem;
+            color: var(--text2);
+        }
+        .subdim-score {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .subdim-bar {
+            height: 8px;
+            background: var(--bg2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .subdim-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        /* Priority Section */
+        .priority-card {
+            position: relative;
+            padding-left: 1rem;
+        }
+        .priority-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 2px;
+        }
+        .priority-card.critical::before { background: var(--red); }
+        .priority-card.high::before { background: var(--orange); }
+        .priority-card.medium::before { background: var(--amber); }
+        
+        .priority-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .priority-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .priority-score {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .priority-score.low { background: rgba(239,68,68,0.2); color: #f87171; }
+        .priority-score.mid { background: rgba(245,158,11,0.2); color: var(--amber); }
+        
+        .priority-detail {
+            font-size: 0.85rem;
+            color: var(--text2);
+            margin-bottom: 0.75rem;
+        }
+        .priority-solution {
+            background: var(--bg2);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .priority-solution-title {
+            color: var(--cyan);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .priority-solution ul {
+            padding-left: 1.25rem;
+            color: var(--text2);
+        }
+        .priority-solution li {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Chart */
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: var(--bg2);
+            color: var(--text2);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table tr:hover {
+            background: rgba(59,130,246,0.05);
+        }
+        .score-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .score-badge.critical { background: rgba(239,68,68,0.2); color: #f87171; }
+        .score-badge.warning { background: rgba(245,158,11,0.2); color: var(--amber); }
+        .score-badge.good { background: rgba(16,185,129,0.2); color: var(--emerald); }
+        
+        /* Urgency Badge */
+        .urgency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .urgency-badge.critical { background: rgba(239,68,68,0.2); color: #f87171; }
+        .urgency-badge.high { background: rgba(249,115,22,0.2); color: #fb923c; }
+        .urgency-badge.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
+        .urgency-badge.low { background: rgba(16,185,129,0.2); color: var(--emerald); }
+        
+        /* Consulting Box */
+        .consult-box {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.05));
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+        .consult-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            color: var(--blue);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .consult-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        @media (max-width: 800px) { .consult-list { grid-template-columns: 1fr; } }
+        .consult-item {
+            background: var(--bg2);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .consult-item-title {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+        .consult-item-desc {
+            color: var(--text2);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">📊</div>
+            <div class="logo-text">
+                <h1>Transformation Readiness Index</h1>
+                <span>รายงานสรุปผลการประเมินความพร้อมในการปรับเปลี่ยนองค์กร</span>
+            </div>
+        </div>
+        <div class="header-badge">
+            <div class="sample">N = 207 องค์กร</div>
+            <div class="date">ข้อมูลจากการสำรวจ ปี 2567-2568</div>
+        </div>
+    </div>
+</header>
+
+<main class="main">
+    <!-- Legend -->
+    <div class="legend-box">
+        <div class="legend-title">📖 หลักเกณฑ์การแปลค่าคะแนน (โปรดอ่านก่อนดูผลประเมิน)</div>
+        <div class="legend-grid">
+            <div class="legend-section">
+                <h4>🎯 ระดับความพร้อม (คะแนน 1-4)</h4>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><span class="legend-range">3.50 - 4.00</span><span>🟢 <b>พร้อมเต็มที่</b> - มีแนวปฏิบัติที่ชัดเจน ครบถ้วน</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div><span class="legend-range">3.00 - 3.49</span><span>🔵 <b>พร้อมดี</b> - มีพื้นฐานดี ยังมีช่องว่างเล็กน้อย</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span class="legend-range">2.50 - 2.99</span><span>🟡 <b>พร้อมปานกลาง</b> - มีการดำเนินการบ้าง ต้องพัฒนาเพิ่ม</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span class="legend-range">2.00 - 2.49</span><span>🟠 <b>พร้อมน้อย</b> - มีการดำเนินการไม่สม่ำเสมอ</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span class="legend-range">1.00 - 1.99</span><span>🔴 <b>ไม่พร้อม</b> - ยังไม่มีแนวปฏิบัติที่ชัดเจน</span></div>
+            </div>
+            <div class="legend-section">
+                <h4>⏰ ระดับความเร่งด่วนในการพัฒนา</h4>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span class="legend-range">🚨 วิกฤต</span><span>คะแนน < 2.50 และ %ตอบต่ำ ≥ 45% - ต้องดำเนินการทันที</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span class="legend-range">⚠️ สูง</span><span>คะแนน < 2.70 และ %ตอบต่ำ ≥ 40% - ควรเร่งดำเนินการ</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span class="legend-range">📌 ปานกลาง</span><span>คะแนน < 2.85 - ควรวางแผนพัฒนา</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><span class="legend-range">✅ ต่ำ</span><span>คะแนน ≥ 3.00 - รักษาระดับและต่อยอด</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+        <h2 class="section-title">📋 สรุปผลการประเมินภาพรวม (207 องค์กร)</h2>
+        <div class="grid-2" style="grid-template-columns: 300px 1fr;">
+            <div class="card score-card">
+                <div class="score-label">คะแนน TRI เฉลี่ยรวม</div>
+                <div class="score-value">2.89<span class="score-max">/4.00</span></div>
+                <div class="score-pct">คิดเป็น 72.25%</div>
+                <div class="score-level level-yellow">🟡 พร้อมปานกลาง</div>
+                <div style="margin-top:1rem;font-size:0.85rem;color:var(--text2);text-align:left;">
+                    <b>ความหมาย:</b> โดยรวมองค์กรไทยมีพื้นฐานความพร้อม แต่ยังมีช่องว่างสำคัญโดยเฉพาะด้าน People ที่ต้องเร่งพัฒนา
+                </div>
+            </div>
+            <div class="card">
+                <div style="font-family:'Space Grotesk';font-weight:600;margin-bottom:1rem;">เปรียบเทียบ 4 มิติหลัก</div>
+                <div class="grid-4">
+                    <div class="persp-card card blue">
+                        <div class="persp-header">
+                            <div class="persp-title"><span class="persp-icon">📈</span><span class="persp-name">Business</span></div>
+                            <div class="persp-score"><div class="persp-score-value" style="color:var(--cyan)">2.97</div></div>
+                        </div>
+                        <div class="subdim-bar"><div class="subdim-bar-fill" style="width:74.25%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+                    </div>
+                    <div class="persp-card card purple">
+                        <div class="persp-header">
+                            <div class="persp-title"><span class="persp-icon">💻</span><span class="persp-name">Technology</span></div>
+                            <div class="persp-score"><div class="persp-score-value" style="color:var(--purple)">2.92</div></div>
+                        </div>
+                        <div class="subdim-bar"><div class="subdim-bar-fill" style="width:73%;background:linear-gradient(90deg,var(--purple),var(--pink))"></div></div>
+                    </div>
+                    <div class="persp-card card green">
+                        <div class="persp-header">
+                            <div class="persp-title"><span class="persp-icon">👥</span><span class="persp-name">People</span></div>
+                            <div class="persp-score"><div class="persp-score-value" style="color:var(--orange)">2.74</div></div>
+                        </div>
+                        <div class="subdim-bar"><div class="subdim-bar-fill" style="width:68.5%;background:linear-gradient(90deg,var(--orange),var(--amber))"></div></div>
+                    </div>
+                    <div class="persp-card card pink">
+                        <div class="persp-header">
+                            <div class="persp-title"><span class="persp-icon">🌟</span><span class="persp-name">Culture</span></div>
+                            <div class="persp-score"><div class="persp-score-value" style="color:var(--pink)">2.94</div></div>
+                        </div>
+                        <div class="subdim-bar"><div class="subdim-bar-fill" style="width:73.5%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div></div>
+                    </div>
+                </div>
+                <div style="margin-top:1rem;padding:1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;">
+                    <div style="font-weight:600;color:#f87171;margin-bottom:0.5rem;">🚨 พบจุดอ่อนสำคัญ: People (2.74)</div>
+                    <div style="font-size:0.85rem;color:var(--text2);">ด้าน People มีคะแนนต่ำที่สุด โดยเฉพาะ Change Readiness (2.65) และ Communication (2.69) ต้องเร่งพัฒนา</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Priority Issues -->
+    <div class="section">
+        <h2 class="section-title">🚨 ประเด็นเร่งด่วนที่ต้องพัฒนา (เรียงตามความเร่งด่วน)</h2>
+        <div class="grid-2">
+            <!-- Critical 1 -->
+            <div class="card priority-card critical">
+                <div class="priority-header">
+                    <div class="priority-title">1. Change Agent / Agile Team</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.56</span>
+                        <span class="urgency-badge critical">🚨 วิกฤต</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> 45.9% ขององค์กรยังไม่มี Change Agent หรือ Agile Team ที่เป็นรูปธรรม<br>
+                    <b>ผลกระทบ:</b> ไม่มีคนขับเคลื่อนการเปลี่ยนแปลงในระดับปฏิบัติการ ทำให้ Transformation ล้มเหลว
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>จัดอบรม Change Agent Certification Program</li>
+                        <li>ออกแบบโครงสร้าง Agile Team และ Role/Responsibility</li>
+                        <li>สร้าง Change Network ข้ามหน่วยงาน</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Critical 2 -->
+            <div class="card priority-card critical">
+                <div class="priority-header">
+                    <div class="priority-title">2. Change Management System</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.64</span>
+                        <span class="urgency-badge critical">🚨 วิกฤต</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> 42% ขององค์กรไม่มีแนวทางบริหารจัดการการเปลี่ยนแปลงที่เป็นระบบ<br>
+                    <b>ผลกระทบ:</b> การเปลี่ยนแปลงเกิดขึ้นแบบกระจัดกระจาย ไม่มีทิศทาง ทำให้สูญเสียทรัพยากร
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>นำ Change Management Framework (ADKAR, Kotter) มาประยุกต์ใช้</li>
+                        <li>จัดทำ Change Governance และ Decision Rights</li>
+                        <li>สร้าง Change Roadmap และ Milestone Tracking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Critical 3 -->
+            <div class="card priority-card critical">
+                <div class="priority-header">
+                    <div class="priority-title">3. Employee Ownership</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.64</span>
+                        <span class="urgency-badge critical">🚨 วิกฤต</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> 40% ของพนักงานไม่มีความรู้สึกเป็นเจ้าของต่อการเปลี่ยนแปลง<br>
+                    <b>ผลกระทบ:</b> เกิด Resistance ต่อการเปลี่ยนแปลง พนักงานทำตามคำสั่งแต่ไม่ Commit
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>สร้าง Employee Engagement Program</li>
+                        <li>ออกแบบ Co-creation Workshop ให้พนักงานมีส่วนร่วม</li>
+                        <li>จัดทำระบบ Recognition & Reward for Change Champions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Critical 4 -->
+            <div class="card priority-card critical">
+                <div class="priority-header">
+                    <div class="priority-title">4. Employee Skills & Capability</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.65</span>
+                        <span class="urgency-badge critical">🚨 วิกฤต</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> 42.5% ขององค์กรประเมินว่าพนักงานยังไม่มีทักษะและศักยภาพพร้อมรับการเปลี่ยนแปลง<br>
+                    <b>ผลกระทบ:</b> แม้มีกลยุทธ์ที่ดี แต่ไม่สามารถ Execute ได้เพราะขาด Capability
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>จัดทำ Skills Gap Analysis และ Learning Roadmap</li>
+                        <li>ออกแบบ Upskilling / Reskilling Program</li>
+                        <li>สร้าง Internal Capability Building Academy</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- High 5 -->
+            <div class="card priority-card high">
+                <div class="priority-header">
+                    <div class="priority-title">5. Critical Role & Succession Plan</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.69</span>
+                        <span class="urgency-badge high">⚠️ สูง</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> 42.5% ขององค์กรไม่มีการกำหนด Critical Role และแผนสืบทอดตำแหน่ง<br>
+                    <b>ผลกระทบ:</b> ความเสี่ยงสูงเมื่อคนสำคัญลาออก องค์กรไม่มีความต่อเนื่อง
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>จัดทำ Talent Review และ Critical Role Mapping</li>
+                        <li>ออกแบบ Succession Planning Framework</li>
+                        <li>สร้าง Leadership Pipeline Development</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- High 6 -->
+            <div class="card priority-card high">
+                <div class="priority-header">
+                    <div class="priority-title">6. Communication About Change Impact</div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <span class="priority-score low">2.69</span>
+                        <span class="urgency-badge high">⚠️ สูง</span>
+                    </div>
+                </div>
+                <div class="priority-detail">
+                    <b>ปัญหา:</b> พนักงานไม่ได้รับข้อมูลที่ชัดเจนเกี่ยวกับผลกระทบของการเปลี่ยนแปลงต่อหน้าที่<br>
+                    <b>ผลกระทบ:</b> เกิดความไม่แน่ใจ วิตกกังวล และต่อต้านการเปลี่ยนแปลง
+                </div>
+                <div class="priority-solution">
+                    <div class="priority-solution-title">💡 Solutions สำหรับ Consultant</div>
+                    <ul>
+                        <li>จัดทำ Communication Plan ที่ครอบคลุม</li>
+                        <li>ออกแบบ Change Impact Assessment per Role</li>
+                        <li>สร้าง Two-way Communication Channel</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+                        <td><b>Learning Culture</b></td>
+                        <td><span class="score-badge good">2.97</span></td>
+                        <td>🟡 พร้อมปานกลาง</td>
+                        <td><span class="urgency-badge low">✅ ต่ำ</span></td>
+                        <td style="font-size:0.8rem;">After Action Review, Continuous Improvement Program</td>
+                    </tr>
+                    <tr>
+                        <td><b>Trust & Collaboration</b></td>
+                        <td><span class="score-badge good">2.98</span></td>
+                        <td>🟡 พร้อมปานกลาง</td>
+                        <td><span class="urgency-badge low">✅ ต่ำ</span></td>
+                        <td style="font-size:0.8rem;">Psychological Safety Workshop, Cross-functional Team</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- BUSINESS STRATEGY -->
+        <div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--blue);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem;">
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    <span style="font-size:2rem;">📈</span>
+                    <div>
+                        <div style="font-family:'Space Grotesk';font-size:1.25rem;font-weight:700;">Business Strategy (กลยุทธ์ธุรกิจ)</div>
+                        <div style="font-size:0.85rem;color:var(--text2);">วิสัยทัศน์ ผู้บริหาร ตลาด ความคล่องตัว การวางแผน</div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-family:'Space Grotesk';font-size:2.5rem;font-weight:800;color:var(--blue);">2.97</div>
+                    <div style="font-size:0.8rem;color:var(--text3);">🟡 พร้อมปานกลาง (สูงที่สุด)</div>
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr><th>หมวดย่อย</th><th>คะแนน</th><th>ระดับ</th><th>ความเร่งด่วน</th><th>Solutions หลัก</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>Change Planning</b></td>
+                        <td><span class="score-badge warning">2.83</span></td>
+                        <td>🟡 พร้อมปานกลาง</td>
+                        <td><span class="urgency-badge medium">📌 ปานกลาง</span></td>
+                        <td style="font-size:0.8rem;">Transformation Roadmap, Risk Management, Contingency Plan</td>
+                    </tr>
+                    <tr>
+                        <td><b>Strategic Agility</b></td>
+                        <td><span class="score-badge warning">2.90</span></td>
+                        <td>🟡 พร้อมปานกลาง</td>
+                        <td><span class="urgency-badge medium">📌 ปานกลาง</span></td>
+                        <td style="font-size:0.8rem;">Business Model Review, OKR Implementation, Agile Strategy</td>
+                    </tr>
+                    <tr>
+                        <td><b>Market Insight</b></td>
+                        <td><span class="score-badge good">2.95</span></td>
+                        <td>🟡 พร้อมปานกลาง</td>
+                        <td><span class="urgency-badge low">✅ ต่ำ</span></td>
+                        <td style="font-size:0.8rem;">Market Intelligence System, Customer Voice Program</td>
+                    </tr>
+                    <tr>
+                        <td><b>Vision & Clarity</b></td>
+                        <td><span class="score-badge good">3.10</span></td>
+                        <td>🔵 พร้อมดี</td>
+                        <td><span class="urgency-badge low">✅ ต่ำ</span></td>
+                        <td style="font-size:0.8rem;">รักษาระดับ + Vision Cascade Workshop</td>
+                    </tr>
+                    <tr>
+                        <td><b>Management Support</b></td>
+                        <td><span class="score-badge good">3.12</span></td>
+                        <td>🔵 พร้อมดี</td>
+                        <td><span class="urgency-badge low">✅ ต่ำ</span></td>
+                        <td style="font-size:0.8rem;">รักษาระดับ + Executive Sponsorship Enhancement</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Consulting Opportunities -->
+    <div class="section">
+        <h2 class="section-title">🎯 โอกาสในการให้บริการที่ปรึกษา (Consulting Opportunities)</h2>
+        
+        <div class="consult-box" style="border-color:rgba(239,68,68,0.3);background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.02));">
+            <div class="consult-title" style="color:#f87171;">🚨 Priority 1: People & Change Management (ความเร่งด่วนสูงสุด)</div>
+            <div class="consult-list">
+                <div class="consult-item">
+                    <div class="consult-item-title">1. Change Agent Development Program</div>
+                    <div class="consult-item-desc">อบรมและ Certify Change Agent, สร้าง Change Network, กำหนด Role/Responsibility</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">2. Change Management System Setup</div>
+                    <div class="consult-item-desc">นำ ADKAR/Kotter Framework, จัดทำ Change Governance, สร้าง Tracking Dashboard</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">3. Employee Engagement & Ownership</div>
+                    <div class="consult-item-desc">Co-creation Workshop, Recognition Program, Communication Plan</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">4. Capability Building & Succession</div>
+                    <div class="consult-item-desc">Skills Gap Analysis, Upskilling Roadmap, Talent Review, Succession Planning</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="consult-box" style="margin-top:1rem;">
+            <div class="consult-title">📌 Priority 2: Strategic Planning & Execution</div>
+            <div class="consult-list">
+                <div class="consult-item">
+                    <div class="consult-item-title">5. Transformation Roadmap</div>
+                    <div class="consult-item-desc">วางแผนกลยุทธ์การเปลี่ยนแปลง, Risk Assessment, Contingency Plan</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">6. Agile Strategy & OKR</div>
+                    <div class="consult-item-desc">Business Model Canvas, OKR Implementation, Strategy Execution</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">7. IT-Business Alignment</div>
+                    <div class="consult-item-desc">Digital Strategy, IT Governance, Innovation Budget Framework</div>
+                </div>
+                <div class="consult-item">
+                    <div class="consult-item-title">8. Culture Transformation</div>
+                    <div class="consult-item-desc">Culture Assessment, Innovation Challenge, Psychological Safety</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section">
+        <h2 class="section-title">📊 กราฟเปรียบเทียบคะแนนรายหมวดย่อย</h2>
+        <div class="card">
+            <div class="chart-container">
+                <canvas id="subdimChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+        <h2 class="section-title">📋 สรุปและข้อเสนอแนะ</h2>
+        <div class="grid-2">
+            <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.02));border:1px solid rgba(16,185,129,0.2);">
+                <div style="font-family:'Space Grotesk';font-weight:600;color:var(--emerald);margin-bottom:1rem;">✅ จุดแข็งที่ควรรักษา</div>
+                <ul style="padding-left:1.25rem;font-size:0.9rem;">
+                    <li style="margin-bottom:0.5rem;"><b>Management Support (3.12)</b> - ผู้บริหารให้ความสำคัญกับ Transformation</li>
+                    <li style="margin-bottom:0.5rem;"><b>Vision & Clarity (3.10)</b> - วิสัยทัศน์ชัดเจน มีการสื่อสารดี</li>
+                    <li style="margin-bottom:0.5rem;"><b>Data Management (3.03)</b> - มีการกำกับดูแลข้อมูลที่ดี</li>
+                    <li><b>Tech Integration (3.02)</b> - ให้ความสำคัญกับเทคโนโลยีใหม่</li>
+                </ul>
+            </div>
+            <div class="card" style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.2);">
+                <div style="font-family:'Space Grotesk';font-weight:600;color:#f87171;margin-bottom:1rem;">🚨 จุดอ่อนที่ต้องเร่งพัฒนา</div>
+                <ul style="padding-left:1.25rem;font-size:0.9rem;">
+                    <li style="margin-bottom:0.5rem;"><b>Change Agent (2.56)</b> - ไม่มีคนขับเคลื่อน → สร้าง Change Network</li>
+                    <li style="margin-bottom:0.5rem;"><b>Change System (2.64)</b> - ไม่เป็นระบบ → นำ Framework มาใช้</li>
+                    <li style="margin-bottom:0.5rem;"><b>Employee Ownership (2.64)</b> - ไม่เป็นเจ้าของ → Engagement Program</li>
+                    <li><b>Skills & Capability (2.65)</b> - ขาดทักษะ → Upskilling/Reskilling</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'IBM Plex Sans Thai', sans-serif";
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Sub-dimension Chart
+    const ctx = document.getElementById('subdimChart').getContext('2d');
+    
+    const labels = [
+        'Change Agent', 'Change System', 'Employee Own.', 'Skills', 
+        'Communication', 'Succession', 'Engagement', 'Change Ready',
+        'Change Plan', 'Process Auto', 'IT Infra', 'Innovation',
+        'Tech Align', 'Strategic Agil', 'Leadership', 'Market',
+        'Learning', 'Trust & Collab', 'Tech Integ', 'Data Mgmt',
+        'Vision', 'Mgmt Support'
+    ];
+    
+    const scores = [
+        2.56, 2.64, 2.64, 2.65,
+        2.69, 2.69, 2.76, 2.65,
+        2.83, 2.85, 2.86, 2.88,
+        2.88, 2.90, 2.94, 2.95,
+        2.97, 2.98, 3.02, 3.03,
+        3.10, 3.12
+    ];
+    
+    const colors = scores.map(s => {
+        if (s < 2.70) return 'rgba(239, 68, 68, 0.8)';
+        if (s < 2.85) return 'rgba(245, 158, 11, 0.8)';
+        if (s < 3.00) return 'rgba(251, 191, 36, 0.8)';
+        return 'rgba(16, 185, 129, 0.8)';
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'คะแนนเฉลี่ย',
+                data: scores,
+                backgroundColor: colors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const score = ctx.raw;
+                            let level = '';
+                            if (score < 2.70) level = '🚨 วิกฤต';
+                            else if (score < 2.85) level = '⚠️ ต้องปรับปรุง';
+                            else if (score < 3.00) level = '📌 ปานกลาง';
+                            else level = '✅ ดี';
+                            return `คะแนน: ${score.toFixed(2)} ${level}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    min: 2.0,
+                    max: 3.5,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        callback: function(value) { return value.toFixed(1); }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                }
+            }
+        },
+        plugins: [{
+            id: 'scoreLabels',
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, di) => {
+                    const meta = chart.getDatasetMeta(di);
+                    meta.data.forEach((bar, i) => {
+                        const score = dataset.data[i];
+                        ctx.save();
+                        ctx.textAlign = 'left';
+                        ctx.font = 'bold 11px Space Grotesk';
+                        ctx.fillStyle = score < 2.70 ? '#f87171' : score < 3.00 ? '#fbbf24' : '#34d399';
+                        ctx.fillText(score.toFixed(2), bar.x + 5, bar.y + 4);
+                        ctx.restore();
+                    });
+                });
+            }
+        }]
+    });
+});
+</script>
+</body>
+</html>
